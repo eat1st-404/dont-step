@@ -1,7 +1,10 @@
 name = "dont-step"
 compatibility_date = "2025-06-07"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "."
+pages_build_output_dir = "dist"
+
+[build]
+command = "npm ci && npm run build:pages"
 
 [[d1_databases]]
 binding = "DB"
