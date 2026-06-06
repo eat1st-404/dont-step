@@ -1032,29 +1032,42 @@
       line-height: 1.35;
     }
 
-    .qr-placeholder {
-      position: absolute;
-      right: 16px;
-      bottom: 16px;
-      width: 72px;
-      height: 72px;
+    .share-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 108px;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
       border: 4px solid var(--black);
-      background:
-        linear-gradient(90deg, #111 0 14px, transparent 14px 100%),
-        linear-gradient(#111 0 14px, transparent 14px 100%),
-        repeating-linear-gradient(45deg, transparent 0 8px, rgba(0,0,0,.18) 8px 12px),
-        #fff;
-      box-shadow: 4px 4px 0 var(--black);
+      box-shadow: 8px 8px 0 var(--black);
+      background: rgba(255,253,246,.96);
     }
 
-    .qr-placeholder::after {
-      content: "QR";
-      position: absolute;
-      inset: 0;
+    .share-copy {
       display: grid;
-      place-items: center;
+      gap: 6px;
+      font-family: "PingFang SC", sans-serif;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .share-copy strong {
       font-size: 18px;
-      font-weight: 900;
+      line-height: 1.15;
+    }
+
+    .share-copy span {
+      font-size: 13px;
+    }
+
+    .share-qr {
+      width: 108px;
+      aspect-ratio: 1;
+      display: block;
+      border: 4px solid var(--black);
+      box-shadow: 4px 4px 0 var(--black);
+      background: #fff;
+      object-fit: cover;
     }
 
     .export-static {
@@ -1186,6 +1199,9 @@
       .control-row { grid-template-columns: 1fr; }
       .float { font-size: 12px; }
       .float.c { display: none; }
+      .share-panel { grid-template-columns: 1fr; text-align: center; }
+      .share-copy { justify-items: center; }
+      .share-qr { width: 132px; margin: 0 auto; }
       .modal { padding: 10px; }
       .modal-panel { max-height: 94vh; padding-bottom: 6px; }
       .modal-actions .control-row { grid-template-columns: 1fr 1fr; }
@@ -1297,6 +1313,18 @@
       <section class="controls">
         <button class="btn-red" id="reset">重新开局</button>
       </section>
+
+      <section class="share-panel hidden" id="share-panel">
+        <div class="share-copy">
+          <strong>把这张图发给朋友，一起来踩卷。</strong>
+          <span>扫旁边二维码就能直接开玩，比比谁更会考低分。</span>
+        </div>
+        <img
+          class="share-qr"
+          src="data:image/png;base64,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"
+          alt="游戏分享二维码"
+        />
+      </section>
     </main>
   </div>
 
@@ -1387,6 +1415,7 @@
     const footprint = document.getElementById('footprint');
     const resetBtn = document.getElementById('reset');
     const controlsEl = document.querySelector('.controls');
+    const sharePanelEl = document.getElementById('share-panel');
     const backToShotBtn = document.getElementById('back-to-shot');
     const closeReportBtn = document.getElementById('close-report');
     const FOOT_WIDTH = 148;
@@ -1416,6 +1445,7 @@
       timerId: null,
       deadline: 0,
       levelIndex: 0,
+      showSharePrompt: false,
       questions: [],
       results: [],
       sheetSnapshots: [],
@@ -1738,6 +1768,7 @@
       const playing = !state.tutorialOpen && !state.used && !reportOpen;
       sheetWrap.classList.toggle('playing', playing);
       document.body.classList.toggle('lock-scroll', playing);
+      sharePanelEl.classList.toggle('hidden', !state.showSharePrompt || reportOpen || state.tutorialOpen);
       controlsEl.classList.toggle('ready-next', state.used && !reportOpen);
     }
 
@@ -1844,6 +1875,7 @@
 
     function startLevel(index) {
       state.levelIndex = index;
+      state.showSharePrompt = false;
       const level = currentLevel();
       resetRoundState();
       state.questions = makeQuestions(level.seed);
@@ -2028,6 +2060,7 @@
 
     async function showReport() {
       stopTimer();
+      state.showSharePrompt = false;
       reportTable.innerHTML = `
         <div class="report-head">科目</div>
         <div class="report-head">踩卷得分</div>
@@ -2077,6 +2110,7 @@
       stopLeaderboardPolling();
       reportModal.classList.remove('show');
       reportModal.setAttribute('aria-hidden', 'true');
+      state.showSharePrompt = false;
       resetBtn.textContent = '重新开局';
       resetBtn.className = 'btn-red';
       syncMobileInteractionState();
@@ -2086,6 +2120,7 @@
       stopLeaderboardPolling();
       reportModal.classList.remove('show');
       reportModal.setAttribute('aria-hidden', 'true');
+      state.showSharePrompt = true;
       statusEl.innerHTML = '返回成功，自己截个图吧。';
       syncMobileInteractionState();
     }
@@ -2110,6 +2145,7 @@
 
     function beginTutorialGame() {
       state.tutorialOpen = false;
+      state.showSharePrompt = false;
       tutorialModal.classList.remove('show');
       tutorialModal.setAttribute('aria-hidden', 'true');
       startTimer(currentLevel().limit);
