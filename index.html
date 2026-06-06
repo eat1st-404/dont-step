@@ -28,6 +28,12 @@
       background-size: 28px 28px, 36px 36px, cover;
     }
 
+    body.lock-scroll {
+      overflow: hidden;
+      touch-action: none;
+      overscroll-behavior: none;
+    }
+
     .page {
       max-width: 460px;
       margin: 0 auto;
@@ -1026,19 +1032,6 @@
       line-height: 1.35;
     }
 
-    .download-ready {
-      display: block;
-      border: 4px solid var(--black);
-      box-shadow: 5px 5px 0 var(--black);
-      background: var(--green);
-      color: var(--black);
-      text-decoration: none;
-      text-align: center;
-      padding: 10px 8px;
-      font-size: 14px;
-      font-weight: 900;
-    }
-
     .qr-placeholder {
       position: absolute;
       right: 16px;
@@ -1323,14 +1316,7 @@
       </section>
 
       <section class="modal-actions">
-        <button class="btn-blue" id="open-save-menu">保存图片</button>
-        <div class="control-row save-choice hidden" id="save-choice">
-          <button id="save-level-0">保存语文</button>
-          <button id="save-level-1">保存数学</button>
-          <button id="save-level-2">保存英语</button>
-          <button id="save-report">保存成绩单</button>
-        </div>
-        <a class="download-ready hidden" id="download-ready" href="#" download>图片已生成，点这里下载</a>
+        <button class="btn-blue" id="back-to-shot">返回截个图吧！</button>
         <button class="btn-red" id="close-report">重新开始</button>
       </section>
     </div>
@@ -1401,24 +1387,14 @@
     const footprint = document.getElementById('footprint');
     const resetBtn = document.getElementById('reset');
     const controlsEl = document.querySelector('.controls');
-    const openSaveMenuBtn = document.getElementById('open-save-menu');
-    const saveChoice = document.getElementById('save-choice');
-    const saveReportBtn = document.getElementById('save-report');
+    const backToShotBtn = document.getElementById('back-to-shot');
     const closeReportBtn = document.getElementById('close-report');
-    const downloadReadyLink = document.getElementById('download-ready');
-    const saveLevelModalBtns = [
-      document.getElementById('save-level-0'),
-      document.getElementById('save-level-1'),
-      document.getElementById('save-level-2')
-    ];
     const FOOT_WIDTH = 148;
     const FOOT_HEIGHT = 292;
     const HEEL_ANCHOR_X = 0.50;
     const HEEL_ANCHOR_Y = 0.90;
     const LEADERBOARD_KEY = 'vibe-gaokao-live-leaderboard-v1';
     const LEADERBOARD_ENDPOINT = '/api/leaderboard';
-    const REPORT_EXPORT_ENDPOINT = '/api/export/report';
-    const SHEET_EXPORT_ENDPOINT = '/api/export/sheet';
     const LEADERBOARD_POLL_MS = 15000;
     const DEFAULT_LEADERBOARD = [
       { name: '卷面刺客', score: 15 },
@@ -1761,6 +1737,7 @@
       const reportOpen = reportModal.classList.contains('show');
       const playing = !state.tutorialOpen && !state.used && !reportOpen;
       sheetWrap.classList.toggle('playing', playing);
+      document.body.classList.toggle('lock-scroll', playing);
       controlsEl.classList.toggle('ready-next', state.used && !reportOpen);
     }
 
@@ -2069,8 +2046,6 @@
       reportNote.textContent = getReportNote(total);
       const cachedRows = cacheLeaderboardScore(total);
       renderLeaderboard(cachedRows);
-      saveChoice.classList.add('hidden');
-      downloadReadyLink.classList.add('hidden');
       reportModal.classList.add('show');
       reportModal.setAttribute('aria-hidden', 'false');
       statusEl.innerHTML = '三科全部交卷，成绩单已生成。';
@@ -2102,134 +2077,17 @@
       stopLeaderboardPolling();
       reportModal.classList.remove('show');
       reportModal.setAttribute('aria-hidden', 'true');
-      saveChoice.classList.add('hidden');
-      downloadReadyLink.classList.add('hidden');
       resetBtn.textContent = '重新开局';
       resetBtn.className = 'btn-red';
       syncMobileInteractionState();
     }
 
-    async function triggerMobileFriendlySave(blob, filename) {
-      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-        try {
-          const file = new File([blob], filename, { type: blob.type || 'image/png' });
-          if (!navigator.canShare || navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: filename });
-            return true;
-          }
-        } catch (error) {
-          if (error && error.name === 'AbortError') {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    function downloadFileUrl(url, filename) {
-      downloadReadyLink.href = url;
-      downloadReadyLink.download = filename;
-      downloadReadyLink.textContent = `图片已生成，点这里保存：${filename}`;
-      downloadReadyLink.classList.remove('hidden');
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      link.target = '_blank';
-      link.rel = 'noopener';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    }
-
-    function buildSheetExportRows(snapshot) {
-      return [...snapshot.querySelectorAll('.row.left, .row.right')].map((row) => ({
-        number: Number(row.querySelector('.row-num')?.textContent || 0),
-        options: [...row.querySelectorAll('.bubble')].map((bubble) => ({
-          label: bubble.dataset.option || '',
-          kind: bubble.classList.contains('filled')
-            ? ((bubble.dataset.kind === 'wrong' || bubble.dataset.kind === 'converted') ? 'converted' : 'correct')
-            : ''
-        }))
-      }));
-    }
-
-    function buildSheetExportPayload(index) {
-      const snapshot = state.sheetSnapshots[index];
-      if (!snapshot) return null;
-      const result = state.results[index] || { wrong: 100, correct: 0, red: 0, timeout: true };
-      return {
-        subject: LEVELS[index].subject,
-        levelIndex: index + 1,
-        score: roundScore(result.wrong),
-        note: result.timeout
-          ? `${LEVELS[index].subject}超时交卷，按剩余彩色填涂规则记分。`
-          : `剩余绿/红：${result.correct}/${result.red || 0}`,
-        rows: buildSheetExportRows(snapshot)
-      };
-    }
-
-    function buildReportExportPayload() {
-      const total = getReportTotal();
-      return {
-        reportId: ensureReportId(),
-        total,
-        note: getReportNote(total),
-        results: buildReportRows(),
-        leaderboard: mergeLeaderboardRows(state.leaderboardRows.length ? state.leaderboardRows : loadLeaderboard())
-      };
-    }
-
-    async function exportRemotePng(endpoint, payload, filename) {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!response.ok) throw new Error(`png_export_${response.status}`);
-      const blob = await response.blob();
-      if (!blob.type.includes('png')) throw new Error('png_export_invalid_type');
-      const shared = await triggerMobileFriendlySave(blob, filename);
-      if (shared) {
-        downloadReadyLink.classList.add('hidden');
-        return;
-      }
-      const url = URL.createObjectURL(blob);
-      downloadFileUrl(url, filename);
-      window.setTimeout(() => URL.revokeObjectURL(url), 30000);
-    }
-
-    async function saveStoredLevelImage(index) {
-      const payload = buildSheetExportPayload(index);
-      if (!payload) return;
-      await saveWithFeedback(() => exportRemotePng(SHEET_EXPORT_ENDPOINT, payload, `踩卷答题卡-${LEVELS[index].subject}.png`));
-    }
-
-    async function saveReportImage() {
-      await saveWithFeedback(() => exportRemotePng(REPORT_EXPORT_ENDPOINT, buildReportExportPayload(), '踩卷成绩单.png'));
-    }
-
-    async function saveWithFeedback(task) {
-      const oldText = openSaveMenuBtn.textContent;
-      downloadReadyLink.classList.add('hidden');
-      openSaveMenuBtn.textContent = '正在生成...';
-      openSaveMenuBtn.disabled = true;
-      try {
-        await task();
-        openSaveMenuBtn.textContent = '已准备好';
-      } catch (error) {
-        console.error('save image failed', error);
-        openSaveMenuBtn.textContent = '保存失败，重试';
-      } finally {
-        window.setTimeout(() => {
-          openSaveMenuBtn.disabled = false;
-          openSaveMenuBtn.textContent = oldText;
-        }, 1200);
-      }
-    }
-
-    function toggleSaveChoice() {
-      saveChoice.classList.toggle('hidden');
+    function backToShot() {
+      stopLeaderboardPolling();
+      reportModal.classList.remove('show');
+      reportModal.setAttribute('aria-hidden', 'true');
+      statusEl.innerHTML = '返回成功，自己截个图吧。';
+      syncMobileInteractionState();
     }
 
     function restartExam(showTutorial = false) {
@@ -2290,12 +2148,8 @@
     sheet.addEventListener('pointercancel', finishPress);
     resetBtn.addEventListener('click', handleMainButton);
     startTutorialBtn.addEventListener('click', beginTutorialGame);
-    openSaveMenuBtn.addEventListener('click', toggleSaveChoice);
-    saveReportBtn.addEventListener('click', saveReportImage);
+    backToShotBtn.addEventListener('click', backToShot);
     closeReportBtn.addEventListener('click', restartExam);
-    saveLevelModalBtns.forEach((button, index) => {
-      button.addEventListener('click', () => saveStoredLevelImage(index));
-    });
   </script>
 </body>
 </html>

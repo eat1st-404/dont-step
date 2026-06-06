@@ -7,6 +7,3 @@ pages_build_output_dir = "."
 binding = "DB"
 database_name = "dont-step"
 database_id = "2b8cb573-2a64-4e83-86ec-8771da35396d"
-
-[browser]
-binding = "BROWSER"

@@ -6,9 +6,6 @@
     "dev": "wrangler pages dev . --compatibility-date=2025-06-07 --binding BROWSER=Browser",
     "deploy": "wrangler pages deploy ."
   },
-  "dependencies": {
-    "@cloudflare/puppeteer": "^1.1.0"
-  },
   "devDependencies": {
     "wrangler": "^4.21.0"
   }
