@@ -1192,6 +1192,7 @@
       .bubble.filled::after { left: 4px; right: 4px; top: 7px; bottom: 6px; }
       .control-row { grid-template-columns: 1fr; }
       .float { font-size: 12px; }
+      .float.c { display: none; }
       .modal { padding: 10px; }
       .modal-panel { max-height: 94vh; padding-bottom: 6px; }
       .modal-actions .control-row { grid-template-columns: 1fr 1fr; }
@@ -1221,17 +1222,24 @@
       }
       .tutorial-rule-focus {
         min-height: auto;
-        padding: 18px 16px 20px;
+        padding: 18px 20px 20px;
         gap: 12px;
-        font-size: 18px;
+        font-size: 16px;
+        align-items: center;
+        text-align: center;
         clip-path: polygon(3% 12%, 21% 12%, 30% 2%, 40% 14%, 60% 7%, 57% 20%, 94% 16%, 86% 38%, 98% 50%, 84% 60%, 94% 86%, 66% 80%, 55% 98%, 44% 84%, 10% 92%, 15% 72%, 2% 60%, 10% 46%, 0 30%);
         filter: drop-shadow(5px 5px 0 var(--black));
       }
+      .tutorial-rule-line {
+        width: 100%;
+        text-align: center;
+      }
       .tutorial-rule-focus strong {
         max-width: 100%;
-        font-size: 20px;
+        font-size: 18px;
         gap: 8px;
         padding: 4px 7px;
+        margin: 0 auto;
       }
       .tutorial-clock { width: 30px; height: 30px; border-width: 3px; }
       .tutorial-clock::before { height: 11px; width: 3px; }
