@@ -1,6 +1,7 @@
 name = "dont-step"
 compatibility_date = "2025-06-07"
 compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "."
 
 [[d1_databases]]
 binding = "DB"
