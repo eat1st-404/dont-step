@@ -168,66 +168,247 @@ function renderShell(title, body) {
       font-size: 19px;
       font-weight: 900;
     }
-    .grade {
-      display: inline-flex;
-      margin: 14px 0 18px;
-      padding: 10px 18px;
-      border: 4px solid var(--red);
-      color: var(--red);
-      font-size: 38px;
+    .card-title {
+      margin: 4px 0 12px;
+      font-size: 20px;
       font-weight: 900;
-      transform: rotate(-8deg);
+      letter-spacing: .08em;
     }
-    .sheet-grid {
+    .export-sheet-wrap {
+      padding: 6px;
+      background: #fff;
+      border: 4px solid var(--black);
+      box-shadow: inset 0 0 0 3px #ececec;
+    }
+    .export-sheet-head {
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .sheet-title {
+      font-size: 26px;
+      line-height: 1.3;
+      font-weight: 900;
+    }
+    .exam-hud {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .export-sheet {
+      position: relative;
+      overflow: hidden;
+      border: 3px solid var(--black);
+      background: #fff;
+      padding-bottom: 18px;
+    }
+    .student-fields {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px 14px;
-      border-top: 3px solid var(--black);
-      border-left: 3px solid var(--black);
-      background: #fff;
+      gap: 12px;
+      margin: 14px 14px 10px;
     }
-    .sheet-cell {
-      border-right: 3px solid var(--black);
-      border-bottom: 3px solid var(--black);
-      min-height: 58px;
-      display: grid;
-      grid-template-columns: 52px repeat(4, 1fr);
+    .student-field {
+      display: flex;
       align-items: center;
-      text-align: center;
-      font-size: 20px;
+      gap: 10px;
+      font-size: 17px;
       font-weight: 800;
     }
-    .sheet-num {
-      background: var(--yellow);
-      min-height: 100%;
+    .student-field i {
+      flex: 1;
+      min-width: 0;
+      height: 0;
+      border-bottom: 3px solid var(--black);
+    }
+    .sheet-meta {
+      margin: 0 14px 10px;
+      font-size: 15px;
+      line-height: 1.45;
+      font-weight: 700;
+    }
+    .grade-stamp {
+      position: absolute;
+      top: 18px;
+      right: 12px;
+      min-width: 112px;
+      height: 84px;
+      display: grid;
+      place-items: center;
+      border: 4px solid var(--red);
+      color: var(--red);
+      background: rgba(255,255,255,.9);
+      font-size: 52px;
+      font-weight: 900;
+      transform: rotate(-9deg);
+      z-index: 3;
+    }
+    .grade-stamp::before {
+      content: '';
+      position: absolute;
+      left: 16px;
+      right: 10px;
+      bottom: 14px;
+      height: 6px;
+      border-top: 4px solid var(--red);
+      border-bottom: 3px solid var(--red);
+      opacity: .88;
+    }
+    .export-answer-grid {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      margin: 0 14px;
+      border: 3px solid var(--black);
+      background: #fff;
+    }
+    .answer-bar {
+      grid-column: 1 / -1;
+      position: relative;
+      min-height: 58px;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 10px 12px;
+      border-bottom: 3px solid var(--black);
+      font-size: 26px;
+      font-weight: 900;
+    }
+    .answer-bar-label {
+      transform: translateX(56px);
+    }
+    .answer-bar .time {
+      position: absolute;
+      left: 10px;
+      top: 8px;
+      min-width: 96px;
+      text-align: center;
+      background: var(--yellow);
+    }
+    .range-head {
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 3px solid var(--black);
+      background: #f2f2f2;
+      font-size: 20px;
+      font-weight: 900;
+    }
+    .range-head + .range-head {
+      border-left: 3px solid var(--black);
+    }
+    .row {
+      min-height: 34px;
+      display: grid;
+      grid-template-columns: 28px repeat(4, minmax(0, 1fr));
+      align-items: stretch;
+      border-bottom: 2px solid var(--black);
+      padding: 3px 3px;
+      background: #fff;
+    }
+    .row.left {
       border-right: 3px solid var(--black);
+    }
+    .row-num {
+      display: grid;
+      place-items: center;
+      font-size: 19px;
+      font-weight: 900;
     }
     .bubble {
       position: relative;
-      min-height: 55px;
+      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 16px;
+      font-weight: 800;
+      border: 1px solid rgba(17,17,17,.08);
+      background: #fff;
     }
-    .bubble.correct::after,
-    .bubble.wrong::after,
-    .bubble.converted::after {
+    .bubble span {
+      position: relative;
+      z-index: 2;
+    }
+    .bubble.filled::after {
       content: '';
       position: absolute;
-      inset: 10px 12px;
+      left: 5px;
+      right: 5px;
+      top: 7px;
+      bottom: 6px;
+      border-radius: 2px;
+      z-index: 1;
+    }
+    .bubble.correct.filled::after {
+      background: #13c744;
+    }
+    .bubble.converted {
+      border-color: rgba(20,180,60,.75);
+      background: radial-gradient(circle, rgba(255,59,25,.14) 0 48%, transparent 49%), #fff;
+    }
+    .bubble.converted.filled::after {
+      background: #ff3b19;
+    }
+    .footprint {
+      position: absolute;
+      width: 148px;
+      height: 292px;
+      transform-origin: 50% 90%;
+      pointer-events: none;
+      opacity: .96;
+      filter: drop-shadow(4px 5px 0 rgba(0,0,0,.16));
+    }
+    .export-footprint {
+      right: 56px;
+      bottom: 24px;
+      transform: rotate(18deg) scale(.9);
+      z-index: 2;
+    }
+    .footprint-print {
+      position: absolute;
+      inset: 0;
+    }
+    .footprint-print .toe,
+    .footprint-print .sole,
+    .footprint-print .heel {
+      position: absolute;
+      display: block;
+      background: rgba(255,59,25,.9);
       border: 3px solid var(--black);
+    }
+    .footprint-print .toe {
       border-radius: 999px;
     }
-    .bubble.correct::after { background: var(--green); }
-    .bubble.wrong::after,
-    .bubble.converted::after { background: var(--red); }
+    .toe-1 { width: 30px; height: 34px; left: 56px; top: 18px; }
+    .toe-2 { width: 26px; height: 28px; left: 90px; top: 34px; }
+    .toe-3 { width: 22px; height: 24px; left: 106px; top: 62px; }
+    .toe-4 { width: 20px; height: 22px; left: 110px; top: 92px; }
+    .toe-5 { width: 22px; height: 24px; left: 100px; top: 122px; }
+    .footprint-print .sole {
+      left: 34px;
+      top: 48px;
+      width: 82px;
+      height: 156px;
+      border-radius: 48% 52% 46% 54% / 30% 30% 70% 70%;
+      transform: rotate(-7deg);
+    }
+    .footprint-print .heel {
+      left: 24px;
+      top: 182px;
+      width: 72px;
+      height: 84px;
+      border-radius: 46% 54% 50% 50% / 52% 52% 48% 48%;
+      transform: rotate(-10deg);
+    }
     .sheet-note {
       margin-top: 16px;
       font-size: 20px;
       line-height: 1.5;
+    }
+    .export-sheet-note {
+      font-size: 18px;
+      font-weight: 700;
     }
   </style>
 </head>
