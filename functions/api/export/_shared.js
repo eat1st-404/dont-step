@@ -1,6 +1,5 @@
-import puppeteer from '@cloudflare/puppeteer';
-
 const PAGE_WIDTH = 900;
+const PAGE_HEIGHT = 1200;
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -242,16 +241,26 @@ async function screenshotHtml(env, html) {
   if (!env.BROWSER) {
     throw new Error('browser_binding_missing');
   }
-  const browser = await puppeteer.launch(env.BROWSER);
-  try {
-    const page = await browser.newPage();
-    await page.setViewport({ width: PAGE_WIDTH, height: 1200, deviceScaleFactor: 2 });
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    const body = await page.$('body');
-    return await body.screenshot({ type: 'png' });
-  } finally {
-    await browser.close();
+
+  const response = await env.BROWSER.quickAction('screenshot', {
+    html,
+    viewport: {
+      width: PAGE_WIDTH,
+      height: PAGE_HEIGHT
+    },
+    gotoOptions: {
+      waitUntil: 'networkidle0'
+    },
+    screenshotOptions: {
+      type: 'png'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`browser_render_${response.status}`);
   }
+
+  return await response.arrayBuffer();
 }
 
 function pngResponse(buffer, filename) {

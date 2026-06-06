@@ -4,8 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "wrangler pages dev . --compatibility-date=2025-06-07 --binding BROWSER=Browser",
-    "build:pages": "rm -rf dist && mkdir dist && cp index.html dist/index.html",
-    "deploy": "wrangler pages deploy dist"
+    "deploy": "wrangler pages deploy ."
   },
   "dependencies": {
     "@cloudflare/puppeteer": "^1.1.0"
