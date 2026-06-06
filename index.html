@@ -204,8 +204,12 @@
       border: 4px solid var(--black);
       box-shadow: inset 0 0 0 3px #d0d0d0;
       user-select: none;
-      touch-action: none;
+      touch-action: pan-y;
       overflow: hidden;
+    }
+
+    .sheet-wrap.playing {
+      touch-action: none;
     }
 
     .sheet-head {
@@ -741,6 +745,8 @@
       width: min(430px, 100%);
       max-height: 92vh;
       overflow: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
       display: grid;
       gap: 12px;
     }
@@ -1187,9 +1193,55 @@
       .control-row { grid-template-columns: 1fr; }
       .float { font-size: 12px; }
       .modal { padding: 10px; }
+      .modal-panel { max-height: 94vh; padding-bottom: 6px; }
       .modal-actions .control-row { grid-template-columns: 1fr 1fr; }
+      .modal-actions {
+        position: sticky;
+        bottom: 0;
+        padding: 10px 0 max(6px, env(safe-area-inset-bottom));
+        background: linear-gradient(180deg, rgba(255,253,246,0) 0%, rgba(255,253,246,.88) 22%, rgba(255,253,246,1) 100%);
+      }
+      .tutorial-card { padding: 16px 12px max(14px, env(safe-area-inset-bottom)); }
+      .tutorial-title { font-size: 20px; margin-bottom: 10px; }
       .tutorial-layout { grid-template-columns: 1fr; }
-      .tutorial-demo { min-height: 210px; }
+      .tutorial-demo { min-height: 188px; }
+      .tutorial-mini-grid { left: 16px; right: 16px; top: 14px; gap: 6px; font-size: 12px; }
+      .tutorial-mini-row { grid-template-columns: 16px repeat(4, 1fr); padding: 4px 3px; }
+      .tutorial-choice { min-height: 18px; }
+      .tutorial-choice.mark-green::after,
+      .tutorial-choice.mark-red::after { inset: 4px 7px 3px; }
+      .tutorial-foot { width: 64px; height: 126px; top: 58%; }
+      .tutorial-hand {
+        top: 74%;
+        width: 44px;
+        height: 44px;
+        border-width: 4px;
+        font-size: 22px;
+        box-shadow: 4px 4px 0 var(--black);
+      }
+      .tutorial-rule-focus {
+        min-height: auto;
+        padding: 18px 16px 20px;
+        gap: 12px;
+        font-size: 18px;
+        clip-path: polygon(3% 12%, 21% 12%, 30% 2%, 40% 14%, 60% 7%, 57% 20%, 94% 16%, 86% 38%, 98% 50%, 84% 60%, 94% 86%, 66% 80%, 55% 98%, 44% 84%, 10% 92%, 15% 72%, 2% 60%, 10% 46%, 0 30%);
+        filter: drop-shadow(5px 5px 0 var(--black));
+      }
+      .tutorial-rule-focus strong {
+        max-width: 100%;
+        font-size: 20px;
+        gap: 8px;
+        padding: 4px 7px;
+      }
+      .tutorial-clock { width: 30px; height: 30px; border-width: 3px; }
+      .tutorial-clock::before { height: 11px; width: 3px; }
+      .tutorial-clock::after { height: 14px; width: 3px; }
+      #start-tutorial { width: 100%; }
+      .controls.ready-next {
+        position: sticky;
+        bottom: max(8px, env(safe-area-inset-bottom));
+        z-index: 9;
+      }
     }
   </style>
 </head>
@@ -1337,8 +1389,10 @@
     const reportNote = document.getElementById('report-note');
     const leaderList = document.getElementById('leader-list');
     const sheet = document.getElementById('sheet');
+    const sheetWrap = document.getElementById('sheet-wrap');
     const footprint = document.getElementById('footprint');
     const resetBtn = document.getElementById('reset');
+    const controlsEl = document.querySelector('.controls');
     const openSaveMenuBtn = document.getElementById('open-save-menu');
     const saveChoice = document.getElementById('save-choice');
     const saveReportBtn = document.getElementById('save-report');
@@ -1617,6 +1671,20 @@
       return LEVELS[state.levelIndex];
     }
 
+    function syncMobileInteractionState() {
+      const reportOpen = reportModal.classList.contains('show');
+      const playing = !state.tutorialOpen && !state.used && !reportOpen;
+      sheetWrap.classList.toggle('playing', playing);
+      controlsEl.classList.toggle('ready-next', state.used && !reportOpen);
+    }
+
+    function revealNextButton() {
+      syncMobileInteractionState();
+      requestAnimationFrame(() => {
+        resetBtn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
+    }
+
     function setHiddenScore(total, correct, wrong) {
       hitTotalEl.textContent = total;
       hitCorrectEl.textContent = correct;
@@ -1722,8 +1790,9 @@
       reportCard.classList.remove('show');
       resetBtn.textContent = '重新开局';
       resetBtn.className = 'btn-red';
-      statusEl.innerHTML = `${level.subject}开考，限时 <span class="red">${level.limit}</span> 秒。踩掉彩色填涂；单选 5 分，多选按剩余比例记分。`;
+      statusEl.innerHTML = `${level.subject}开考，限时 <span class="red">${level.limit}</span> 秒。踩掉彩色填涂；单选 5 分，多选按最终答题卡残留结果计分。`;
       if (!state.tutorialOpen) startTimer(level.limit);
+      syncMobileInteractionState();
     }
 
     function startPress(event) {
@@ -1799,6 +1868,7 @@
       snapshotCurrentSheet();
       statusEl.innerHTML = `<span class="red">${currentLevel().subject}超时交卷</span>，按剩余彩色填涂规则记 ${formatScore(penaltyScore)} 分。`;
       prepareNextAction();
+      revealNextButton();
     }
 
     function scoreRound(timeout) {
@@ -1846,17 +1916,20 @@
       if (erased === 0) {
         statusEl.innerHTML = `${currentLevel().subject}这一脚<span class="red">没有盖住任何填涂</span>，剩余彩色填涂 ${remainingFilled} 个，本关 <span class="red">${formatScore(totalScore)}</span> 分。`;
         prepareNextAction();
+        revealNextButton();
         return;
       }
 
       if (minesTriggered > 0) {
         statusEl.innerHTML = `${currentLevel().subject}踩掉 ${erased} 个填涂点，碰到 <span class="red">${minesTriggered}</span> 个红色雷区；剩余彩色填涂 ${remainingFilled} 个。`;
         prepareNextAction();
+        revealNextButton();
         return;
       }
 
       statusEl.innerHTML = `${currentLevel().subject}踩掉 ${erased} 个填涂点，剩余彩色填涂 ${remainingFilled} 个，本关 <span class="red">${formatScore(totalScore)}</span> 分。`;
       prepareNextAction();
+      revealNextButton();
     }
 
     function prepareNextAction() {
@@ -1898,6 +1971,7 @@
       statusEl.innerHTML = '三科全部交卷，成绩单已生成。';
       resetBtn.textContent = '重新开始';
       resetBtn.className = 'btn-red';
+      syncMobileInteractionState();
     }
 
     function renderLeaderboard(playerScore) {
@@ -1926,6 +2000,7 @@
       downloadReadyLink.classList.add('hidden');
       resetBtn.textContent = '重新开局';
       resetBtn.className = 'btn-red';
+      syncMobileInteractionState();
     }
 
     function addQrPlaceholder(clone) {
@@ -2070,6 +2145,7 @@
         tutorialModal.setAttribute('aria-hidden', 'false');
       }
       startLevel(0);
+      syncMobileInteractionState();
     }
 
     function beginTutorialGame() {
@@ -2077,6 +2153,7 @@
       tutorialModal.classList.remove('show');
       tutorialModal.setAttribute('aria-hidden', 'true');
       startTimer(currentLevel().limit);
+      syncMobileInteractionState();
     }
 
     function handleMainButton() {
